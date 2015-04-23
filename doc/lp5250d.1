@@ -1,0 +1,113 @@
+'\" t
+.ig
+Man page for lp5250d.
+
+Copyright (C) 1999 - 2008 Carey Evans.
+
+You can redistribute and/or modify this document under the terms of 
+the GNU General Public License as published by the Free Software
+Foundation; either version 2 of the License, or (at your option)
+any later version.
+
+This document is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+..
+.TH LP5250D 1 "12 November 2001"
+.SH NAME
+lp5250d \- start an AS/400 printer session
+.SH SYNOPSIS
+.B lp5250d
+.RI [\| OPTIONS \|]
+.I HOSTNAME
+.SH "DESCRIPTION"
+.B lp5250d
+connects to an AS/400 over TCP/IP and provides a printer session
+emulating an IBM 3812 printer.  The printer session works with
+.B scs2ascii
+and host print transform on the AS/400 to print AS/400 spooled files
+on a local printer.
+.PP
+To end a printer session, send it a
+.I SIGTERM
+signal with
+.BR kill (1).
+.PP
+Printing support requires named session support, which is available
+for most recent versions of OS/400, but is only supplied with V4R3 and
+later versions.  For V3R2, V3R7, V4R1 and V4R2, please see informational APAR
+II10918.
+.SH OPTIONS
+Additional
+.B lp5250d
+options are described in the
+.BR tn5250rc (5)
+man page.
+.TP
+\fB\-u\fR, \fB\-\-user=\fIUSER\fR
+run lp5250d as \fIUSER
+.TP
+\fB\-H\fR, \fB\-\-help\fR
+display this help and exit
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+output version information and exit
+.SH EXAMPLES
+.TP
+.I "lp5250d env.DEVNAME=LINPRT1 env.IBMMFRTYPMDL='*HP4' as400sys"
+Connect to
+.I as400sys
+as the printer
+.IR LINPRT1 ,
+using host print transform on the AS/400 to print to an HP Laserjet or
+compatible using lpr.
+.TP
+.I "lp5250d env.DEVNAME=LINPRT1 env.IBMMFRTYPMDL='*OKI184IBM' outputcommand=''scs2ascii | lpr -Poki' as400sys"
+Print to an Okidata Microline 184 Turbo on the local print queue named
+.RB ` oki '.
+.TP
+.I "lp5250d env.DEVNAME=PSPRT outputcommand='scs2ps > scs$$.ps' as400sys"
+Convert spooled files into PostScript\*R files.
+.SH BUGS
+Please report any bugs you find to the bug tracker or to the linux5250
+mailing list.  See the
+.B tn5250
+web site for more details.
+.SH "SEE ALSO"
+.BR tn5250rc (5),
+.BR tn5250 (1),
+.BR scs2ascii (1),
+.BR scs2ps (1),
+.BR http://tn5250.sourceforge.net/ ,
+.BR RFC1205 ,
+.BR RFC2877 ,
+.BR II10918 .
+.SH COPYRIGHT
+.B tn5250
+is copyright
+.if t \(co
+1997 \- 2001 Michael Madore.  This manpage is copyright
+.if t \(co
+1999 \- 2001 Carey Evans.
+.PP
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation; either version 2.1 of the License, or
+(at your option) any later version.
+.PP
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+.PP
+You should have received a copy of the GNU Lesser General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.SH TRADEMARKS
+PostScript is a trademark of Adobe Systems Incorporated.
+.SH AUTHORS
+.B tn5250
+was written by Michael Madore, Jay Felice, Scott Klement
+and others; see the AUTHORS file for details.
+This manual page was written by Carey Evans.

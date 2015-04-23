@@ -1,0 +1,97 @@
+/* Copyright (C) 2001-2008 Scott Klement
+ *
+ * This file is part of TN5250.
+ * 
+ * TN5250 is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation; either version 2.1, or (at your option)
+ * any later version.
+ * 
+ * TN5250 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this software; see the file COPYING.  If not, write to
+ * the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307 USA
+ * 
+ */
+
+#include <windows.h>
+#include "resource.h"
+
+IDI_TN5250_ICON ICON "tn5250.ico"
+
+tn5250-win32-menu MENU DISCARDABLE
+BEGIN
+	POPUP "&File"
+	BEGIN
+		MENUITEM "&Print",		IDM_APP_PRINT
+		MENUITEM "E&xit\tCtrl-Q",	IDM_APP_EXIT
+	END
+	POPUP "&Edit"
+	BEGIN
+		MENUITEM "&Copy",		IDM_EDIT_COPY
+		MENUITEM "&Paste",		IDM_EDIT_PASTE
+		MENUITEM "&Select All",		IDM_EDIT_SELECT_ALL
+	END
+	POPUP "&View"
+	BEGIN
+	        MENUITEM "Change &font...",             IDM_VIEW_FONT
+	END
+	POPUP "&Macro"
+	BEGIN
+	        MENUITEM "&Record/Stop F1\tCtrl-S F1",	IDM_MACRO_RECORD1
+	        MENUITEM "&Record/Stop F2\tCtrl-S F2",	IDM_MACRO_RECORD2
+	        MENUITEM "&Record/Stop F3\tCtrl-S F3",	IDM_MACRO_RECORD3
+	        MENUITEM "&Record/Stop F4\tCtrl-S F4",	IDM_MACRO_RECORD4
+	        MENUITEM "&Execute F1\tCtrl-W F1",	IDM_MACRO_EXEC1
+	        MENUITEM "&Execute F2\tCtrl-W F2",	IDM_MACRO_EXEC2
+	        MENUITEM "&Execute F3\tCtrl-W F3",	IDM_MACRO_EXEC3
+	        MENUITEM "&Execute F4\tCtrl-W F4",	IDM_MACRO_EXEC4
+	END
+	POPUP "&Help"
+	BEGIN
+		MENUITEM "&About Tn5250",	IDM_APP_ABOUT
+	END
+END
+
+
+IDD_DIALOG_CONNECT DIALOG DISCARDABLE  0, 0, 294, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "TN5250 Quick-Connect"
+FONT 8, "MS Sans Serif"
+BEGIN
+    RTEXT           "Host to connect to:",IDC_STATIC,14,24,81,11
+    EDITTEXT        IDC_EDIT_HOST,101,22,175,12,ES_AUTOHSCROLL
+    RTEXT           "Device Name:",IDC_STATIC,36,48,59,11
+    EDITTEXT        IDC_EDIT_DEVICE,101,46,65,13,ES_AUTOHSCROLL
+    CONTROL         "Use SSL Encryption",IDC_CHECK_SSL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,20,76,92,15
+    CONTROL         "Verify Server's SSL certificate",IDC_CHECK_SSLVERIFY,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,92,116,14
+    CONTROL         "Auto-copy, Right-click paste",IDC_CHECK_UNIXCOPY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,19,110,118,12
+    RTEXT           "Char map:",IDC_STATIC,22,134,40,11
+    EDITTEXT        IDC_EDIT_CHARMAP,66,132,31,12,ES_AUTOHSCROLL
+    GROUPBOX        "Terminal Size",IDC_STATIC,173,77,71,50
+    RADIOBUTTON     "27 x 132",IDC_RADIO_132,183,105,47,15,WS_GROUP|WS_TABSTOP
+    RADIOBUTTON     "24 x 80",IDC_RADIO_80,183,92,54,12
+    DEFPUSHBUTTON   "OK",IDOK,162,145,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,223,146,50,14
+END
+
+IDD_DIALOG_DFTMAP DIALOG DISCARDABLE  0, 0, 329, 222
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Setup - tn5250"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "&Next >",IDOK,215,201,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,278,201,50,14
+    LISTBOX         IDC_LIST_MAPS,48,23,221,163,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Please select the character map that tn5250 should use by default:",
+                    IDC_STATIC,54,9,211,8
+END

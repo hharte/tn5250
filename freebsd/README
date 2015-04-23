@@ -1,0 +1,92 @@
+Notes on keyboard mapping under FreeBSD:
+
+-------------------------------------------------------------------------------
+Mapping the keys for "console mode":
+-------------------------------------------------------------------------------
+
+This approach (which is the one that I ended up using) works with the standard
+syscons termcap entry -- you do not need to modify your termcap, or change
+your terminal type to use it.
+
+1) First and foremost, it should be noted that the keyboard mapping that
+       I've done here only works on the console, using the syscons (default)
+       driver.  (If someone who is running the pcvt driver makes a similar
+       map, please send it to me, we'll try to send it in future distributions.)
+
+2) It is important to note that changing your keyboard map will change it
+       for all of your virtual terminals.  If you're using tn5250 in one
+       session, and switch to another session to do something else, you will
+       probably find that some keys do strange things.  I tried to set things
+       up so that pressing SHIFT with the remapped key will cause it to behave
+       in its default manner...  
+ 
+3) Each key is read by the syscons driver, and associated with a specific
+       ASCII code or key according to the keyboard map that you currently
+       have loaded.  The keyboard maps that come with FreeBSD are stored
+       in /usr/share/syscons/keymap.  I have provided a keyboard map called
+       "us.5250.kbd" which is based on the United States ISO keyboard thats
+       included with FreeBSD (us.iso.kbd).  If you're living in another 
+       country, or would like to make your own customization to this map,
+       it can be edited with vi, or the text editor of your choice.
+
+       Use "kbdcontrol -l <mapname>" to load a new keyboard map.
+
+       You can use "diff" to see what I changed between the files
+       us.5250.kbd and /usr/share/syscons/keymap/us.iso.kbd to see
+       what modifications I made, if you'd like to use that as a template
+       for making a keyboard map for another country.
+ 
+4) Function keys (fkey01-fkey63 in the keymap file) can be mapped to send
+       a string.  This allows us to make F13-F24 work without changing our
+       termcap, and allows us to send more than one character (such as
+       C-g H for Help, or C-g ! for F13) to the emulator.  
+
+       In my keyboard map, I disabled function keys 62-64 (normally the
+       "Windows95 keys") so I could assign strings to some of the other
+       keyboard keys.
+
+       Use "kbdcontrol -f <n> <string>" to map a function key to a string,
+       or "kbdcontrol -F" to reset the function keys to their default values.
+
+       Example:   kbdcontrol -f 5 "You pressed F5"  
+
+5) I created a script  "5250keys" that will load my keyboard map, and then
+       assign the strings for the various function keys.  
+
+6) You'll want to do:  
+        kbdcontrol -F
+        kbdcontrol -l /usr/share/syscons/keymap/us.iso.kbd 
+                      (or whatever map you use)
+
+   To set your keyboard back to normal after using tn5250.  In fact, you may
+   want to write a script that alters your keyboard mapping, runs tn5250,
+   then sets things back to normal...
+
+
+-------------------------------------------------------------------------------
+Keyboard mapping in an xterm (using the xt5250 script)
+-------------------------------------------------------------------------------
+NOTES:
+
+1) The xt5250 script thats installed with the tn5250 automates the process
+        of loading your keyboard mapping information from the XTerm file 
+        that it puts in /usr/local/share/tn5250/ and changes your TERM    
+        environment variable to xterm-5250.
+
+2) The sample.termcap file thats contained in the tn5250 distribution has
+        settings that appear to work great in FreeBSD 4.x, and also has
+        (commented out) settings that work better in FreeBSD 3.x and
+        older.  
+
+
+INSTALLATION:
+
+1) If the install script did not do it for you copy XTerm from the
+	distribution to /usr/local/share/tn5250.
+
+2) Check your .termcap or /etc/termcap and make sure that its got the
+	entries for xterm-5250 in it.   If you installed an older
+	version of tn5250, please remove the old termcap entries and
+	load the new ones from this distribution.  
+
+That should do it!  Now the xt5250 script should work nicely under FreeBSD!
