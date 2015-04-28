@@ -432,14 +432,14 @@ tn5250_config_load_default (Tn5250Config * This)
       return -1;
     }
 
-  dir = (char *) malloc (strlen (pwent->pw_dir) + 12);
+  dir = (char *) malloc (strlen (getenv("HOME")) + 12);
   if (dir == NULL)
     {
       perror ("malloc");
       return -1;
     }
 
-  strcpy (dir, pwent->pw_dir);
+  strcpy (dir, getenv("HOME"));
   strcat (dir, "/.tn5250rc");
   if ((ec = tn5250_config_load (This, dir)) == -1)
     perror (dir);

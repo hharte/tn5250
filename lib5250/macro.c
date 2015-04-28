@@ -348,11 +348,11 @@ char *macro_filename (Tn5250Display *Dsp)
    if (pwent == NULL)
       return (NULL) ;
 
-   dir = (char *)malloc (strlen (pwent->pw_dir) + 16);
+   dir = (char *)malloc (strlen (getenv("HOME")) + 16);
    if (dir == NULL)
       return (NULL) ;
 
-   strcpy (dir, pwent->pw_dir);
+   strcpy (dir, getenv("HOME"));
    strcat (dir, "/.tn5250macros");
 
    fname = dir ;
