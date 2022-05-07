@@ -728,9 +728,10 @@ SHELL=${CONFIG_SHELL-/bin/sh}
 # Identity of this package.
 PACKAGE_NAME='tn5250'
 PACKAGE_TARNAME='tn5250'
-PACKAGE_VERSION='0.17.4'
-PACKAGE_STRING='tn5250 0.17.4'
-PACKAGE_BUGREPORT='linux5250@midrange.com'
+PACKAGE_VERSION='0.17.4.1'
+PACKAGE_STRING='tn5250 0.17.4.1'
+#PACKAGE_BUGREPORT='linux5250@midrange.com'
+PACKAGE_BUGREPORT='barry.nelson@amobiledevice.com'
 
 # Factoring default headers for most tests.
 ac_includes_default="\
@@ -2256,7 +2257,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE='tn5250'
- VERSION='0.17.4'
+ VERSION='0.17.4.1'
 
 
 cat >>confdefs.h <<_ACEOF
@@ -8269,9 +8270,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
            allow_undefined_flag='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
          else
            case ${MACOSX_DEPLOYMENT_TARGET} in
-             10.[012])
-               allow_undefined_flag='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-               ;;
+#             10.[012])
+#               allow_undefined_flag='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
+#               ;;
              10.*)
                allow_undefined_flag='${wl}-undefined ${wl}dynamic_lookup'
                ;;
@@ -11328,9 +11329,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
            allow_undefined_flag_CXX='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
          else
            case ${MACOSX_DEPLOYMENT_TARGET} in
-             10.[012])
-               allow_undefined_flag_CXX='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-               ;;
+#             10.[012])
+#               allow_undefined_flag_CXX='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
+#               ;;
              10.*)
                allow_undefined_flag_CXX='${wl}-undefined ${wl}dynamic_lookup'
                ;;
@@ -14888,9 +14889,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
            allow_undefined_flag_F77='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
          else
            case ${MACOSX_DEPLOYMENT_TARGET} in
-             10.[012])
-               allow_undefined_flag_F77='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-               ;;
+#             10.[012])
+#               allow_undefined_flag_F77='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
+#               ;;
              10.*)
                allow_undefined_flag_F77='${wl}-undefined ${wl}dynamic_lookup'
                ;;
@@ -17489,9 +17490,9 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
            allow_undefined_flag_GCJ='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
          else
            case ${MACOSX_DEPLOYMENT_TARGET} in
-             10.[012])
-               allow_undefined_flag_GCJ='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-               ;;
+#             10.[012])
+#               allow_undefined_flag_GCJ='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
+#               ;;
              10.*)
                allow_undefined_flag_GCJ='${wl}-undefined ${wl}dynamic_lookup'
                ;;
@@ -23236,6 +23237,7 @@ fi
 echo $ECHO_N "checking whether to build with OpenSSL support... $ECHO_C" >&6; }
 if test "${ac_cv_use_ssl+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
+  ac_cv_use_ssl=yes
 else
   ac_cv_use_ssl=yes
 fi
@@ -23244,6 +23246,12 @@ echo "${ECHO_T}$ac_cv_use_ssl" >&6; }
 
 if test "$ac_cv_use_ssl" = "yes"
 then
+#    cat >>confdefs.h <<_ACEOF
+##define HAVE_LIBSSL 1
+##define HAVE_LIBCRYPTO 1
+#_ACEOF
+#
+#    LIBS="-lssl -lcrypto $LIBS"
 checksslinclude() {
     if test -f "$1/include/openssl/ssl.h"; then
         sslincludedir="-I$1/include"
@@ -23298,6 +23306,7 @@ if test -n $sslincludedir; then
 echo $ECHO_N "checking for CRYPTO_num_locks in -lcrypto... $ECHO_C" >&6; }
 if test "${ac_cv_lib_crypto_CRYPTO_num_locks+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
+  ac_cv_lib_crypto_CRYPTO_num_locks=yes
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lcrypto  $LIBS"
@@ -23314,7 +23323,10 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
+#include <openssl/crypto.h>
+#ifndef CRYPTO_num_locks
 char CRYPTO_num_locks ();
+#endif
 int
 main ()
 {
@@ -23375,6 +23387,7 @@ echo "$as_me: error: ** Unable to find OpenSSL libraries!" >&2;}
 echo $ECHO_N "checking for SSL_library_init in -lssl... $ECHO_C" >&6; }
 if test "${ac_cv_lib_ssl_SSL_library_init+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
+  ac_cv_lib_ssl_SSL_library_init=yes
 else
   ac_check_lib_save_LIBS=$LIBS
 LIBS="-lssl  $LIBS"
@@ -23391,7 +23404,10 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
+#include <openssl/ssl.h>
+#ifndef SSL_library_init
 char SSL_library_init ();
+#endif
 int
 main ()
 {
@@ -24994,4 +25010,3 @@ if test "$no_create" != yes; then
   # would make configure fail if this is the last instruction.
   $ac_cs_success || { (exit 1); exit 1; }
 fi
-
