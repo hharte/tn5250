@@ -65,9 +65,10 @@ Mac OSX
 To build on Mac OSX, first install brew, then:
 brew install openssl@1.1
 cd path_to_source
-export LDFLAGS=-L/usr/local/Cellar/openssl@1.1/1.1.1n/lib
-export CFLAGS=-I/usr/local/Cellar/openssl@1.1/1.1.1n/include
-./configure --with-ssl=/usr/local/Cellar/openssl@1.1/1.1.1n/include --build=x86_64-apple-darwin17.7.0 --without-python
+export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+export PKG_CONFIG_PATH="/usr/local/opt/openssl@1.1/lib/pkgconfig"
+./configure --with-ssl --with-ssl=/usr/local/Cellar/openssl@1.1/1.1.1n --build=x86_64-apple-darwin17.7.0 --without-python $@
 make
 make install
 
