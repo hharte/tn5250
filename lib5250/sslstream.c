@@ -369,15 +369,19 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
    }
 
    if (!strcmp(methstr, "ssl2")) {
-        meth = SSLv2_client_method();         
-        TN5250_LOG(("SSL Method = SSLv2_client_method()\n"));
+        TN5250_LOG(("SSL Method = SSL2 not supported, using TLS\n"));
+//        meth = SSLv2_client_method();         
+//        TN5250_LOG(("SSL Method = SSLv2_client_method()\n"));
    } else if (!strcmp(methstr, "ssl3")) {
-        meth = SSLv3_client_method();         
-        TN5250_LOG(("SSL Method = SSLv3_client_method()\n"));
+        TN5250_LOG(("SSL Method = SSL3 not supported, using TLS\n"));
+//        meth = SSLv3_client_method();         
+//        TN5250_LOG(("SSL Method = SSLv3_client_method()\n"));
    } else {
-        meth = SSLv23_client_method();         
-        TN5250_LOG(("SSL Method = SSLv23_client_method()\n"));
+        TN5250_LOG(("SSL Method = TLS_client_method()\n"));
+//        meth = SSLv23_client_method();         
+//        TN5250_LOG(("SSL Method = SSLv23_client_method()\n"));
    }
+   meth = TLS_client_method();
 
 /*  create a new SSL context */
 
@@ -1719,4 +1723,3 @@ X509 *ssl_stream_load_cert(Tn5250Stream *This, const char *file) {
 #endif /* HAVE_LIBSSL */
 
 /* vi:set sts=3 sw=3: */
-
