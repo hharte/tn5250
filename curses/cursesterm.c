@@ -21,9 +21,10 @@
  */
 #define _TN5250_TERMINAL_PRIVATE_DEFINED
 #include "tn5250-private.h"
-#include "cursesterm.h"
 
 #ifdef USE_CURSES
+#include "cursesterm.h"
+extern char *tgetstr();
 
 /* Some versions of ncurses don't have this defined. */
 #ifndef A_VERTICAL
@@ -325,7 +326,8 @@ static void curses_terminal_init(Tn5250Terminal * This)
    raw();
 
 #ifdef USE_OWN_KEY_PARSING
-   if ((str = (unsigned char *)tgetstr ("ks", NULL)) != NULL)
+   // if ((str = (unsigned char *)tgetstr ("ks", NULL)) != NULL)
+   if ((str = (char *)tgetstr ("ks", NULL)) != NULL)
       tputs (str, 1, putchar);
    fflush (stdout);
 #else
@@ -417,7 +419,8 @@ static void curses_terminal_init(Tn5250Terminal * This)
    s = sizeof (curses_vt100) / sizeof (Key);
    for (i = 0; i < c; i++) {
       This->data->k_map[i].k_code = curses_caps[i].k_code;
-      if ((str = (unsigned char *)tgetstr (curses_caps[i].k_str, NULL)) != NULL) {
+      // if ((str = (unsigned char *)tgetstr (curses_caps[i].k_str, NULL)) != NULL) {
+      if ((str = (char *)tgetstr (curses_caps[i].k_str, NULL)) != NULL) {
 	 TN5250_LOG(("Found string for cap '%s': '%s'.\n",
 		  curses_caps[i].k_str, str));
 	 strcpy (This->data->k_map[i].k_str, str);
@@ -442,7 +445,8 @@ static void curses_terminal_init(Tn5250Terminal * This)
    /* Damn the exceptions to the rules. (ESC + DEL) */
    This->data->k_map[This->data->k_map_len-1].k_code = K_INSERT;
    This->data->k_map[This->data->k_map_len-s-1].k_code = K_INSERT;
-   if ((str = (unsigned char *)tgetstr ("kD", NULL)) != NULL) {
+   // if ((str = (unsigned char *)tgetstr ("kD", NULL)) != NULL) {
+   if ((str = (char *)tgetstr ("kD", NULL)) != NULL) {
       This->data->k_map[This->data->k_map_len-1].k_str[0] = '\033';
       This->data->k_map[This->data->k_map_len-s-1].k_str[0] = K_CTRL('G');
       strcpy (This->data->k_map[This->data->k_map_len-1].k_str + 1, str);
@@ -640,9 +644,11 @@ static void curses_terminal_update(Tn5250Terminal * This, Tn5250Display *display
       if(This->data->is_xterm) {
          if (This->data->font_132!=NULL) {
                if (tn5250_display_width (display)>100)
-                    printf(This->data->font_132);
+                    // printf(This->data->font_132);
+                    printf("%s",This->data->font_132);
                else
-                    printf(This->data->font_80);
+                    // printf(This->data->font_80);
+                    printf("%s",This->data->font_80);
          }
 	 printf ("\x1b[8;%d;%dt", tn5250_display_height (display)+1,
 	       tn5250_display_width (display));
