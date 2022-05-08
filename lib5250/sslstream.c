@@ -381,7 +381,11 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
 //        meth = SSLv23_client_method();         
 //        TN5250_LOG(("SSL Method = SSLv23_client_method()\n"));
    }
+#ifndef SSL_OP_NO_TLSv1_3
+   meth = SSLv23_client_method();
+#else
    meth = TLS_client_method();
+#endif
 
 /*  create a new SSL context */
 

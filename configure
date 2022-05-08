@@ -23246,12 +23246,6 @@ echo "${ECHO_T}$ac_cv_use_ssl" >&6; }
 
 if test "$ac_cv_use_ssl" = "yes"
 then
-#    cat >>confdefs.h <<_ACEOF
-##define HAVE_LIBSSL 1
-##define HAVE_LIBCRYPTO 1
-#_ACEOF
-#
-#    LIBS="-lssl -lcrypto $LIBS"
 checksslinclude() {
     if test -f "$1/include/openssl/ssl.h"; then
         sslincludedir="-I$1/include"
@@ -23325,7 +23319,7 @@ extern "C"
 #endif
 #include <openssl/crypto.h>
 #ifndef CRYPTO_num_locks
-char CRYPTO_num_locks ();
+int CRYPTO_num_locks ();
 #endif
 int
 main ()
@@ -23406,7 +23400,7 @@ extern "C"
 #endif
 #include <openssl/ssl.h>
 #ifndef SSL_library_init
-char SSL_library_init ();
+int SSL_library_init ();
 #endif
 int
 main ()
