@@ -28,6 +28,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/opensslv.h>
 #include <time.h>
 
 static int ssl_stream_get_next(Tn5250Stream *This,unsigned char *buf,int size);
@@ -352,13 +353,19 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
    int len;
    char methstr[5];
    SSL_METHOD *meth=NULL;
+   long flags = 0;
 
    TN5250_LOG(("tn5250_ssl_stream_init() entered.\n"));
 
 /*  initialize SSL library */
+/*  https://wiki.openssl.org/index.php/Library_Initialization */
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   OPENSSL_init_ssl(0, NULL);
+#else
    SSL_load_error_strings();
    SSL_library_init();
+#endif
 
 /*  which SSL method do we use? */
 
@@ -381,10 +388,14 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
 //        meth = SSLv23_client_method();         
 //        TN5250_LOG(("SSL Method = SSLv23_client_method()\n"));
    }
-#ifndef SSL_OP_NO_TLSv1_3
-   meth = SSLv23_client_method();
-#else
+
+/* Prefer the flexible version *_method available in OpenSSL 1.1.x and above */
+/* https://www.openssl.org/docs/man1.1.1/man3/SSLv23_client_method.html      */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
    meth = TLS_client_method();
+#else
+   meth = SSLv23_client_method();
 #endif
 
 /*  create a new SSL context */
@@ -394,6 +405,30 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
         DUMP_ERR_STACK ();
         return -1;
    }
+
+/* retrieve current options */
+
+   flags = SSL_CTX_get_options();
+
+/* disable compression, which can leak information */
+
+#ifdef SSL_OP_NO_COMPRESSION
+   flags |= SSL_OP_NO_COMPRESSION;
+#endif
+
+/* disable SSLv2 and SSLv3 on pre-OpenSSL 1.1.x. This will ensure TLS 1.0 and above. */
+
+#ifdef SSL_OP_NO_SSLv2
+    flags |= SSL_OP_NO_SSLv2;
+#endif
+
+#ifdef SSL_OP_NO_SSLv3
+    flags |= SSL_OP_NO_SSLv3;
+#endif
+
+/* finally, set the context options */
+
+   SSL_CTX_set_options(This->ssl_context, flags);
 
 /* if a certificate authority file is defined, load it into this context */
 
@@ -418,14 +453,13 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
         SSL_CTX_set_default_passwd_cb(This->ssl_context,
                 (pem_password_cb *)ssl_stream_passwd_cb);
         SSL_CTX_set_default_passwd_cb_userdata(This->ssl_context, (void *)This);
-
    }
 
 /* If a certificate file has been defined, load it into this context as well */
 
    if (This->config!=NULL && tn5250_config_get (This->config, "ssl_cert_file")){
 
-        if ( tn5250_config_get (This->config,  "ssl_check_exp") ) {
+        if (tn5250_config_get (This->config,  "ssl_check_exp") ) {
            X509 *client_cert;
            time_t tnow;
            int extra_time;
@@ -494,19 +528,61 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
 int tn3270_ssl_stream_init (Tn5250Stream *This)
 {
    int len;
+   SSL_METHOD *meth=NULL;
+   long flags = 0;
+
+   TN5250_LOG(("tn3270_ssl_stream_init() entered.\n"));
 
 /* initialize SSL library */
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   OPENSSL_init_ssl(0, NULL);
+#else
    SSL_load_error_strings();
    SSL_library_init();
+#endif
 
-/* create a new SSL context */
+/*  which SSL method do we use? */
+/*  prefer the flexible version *_method available in OpenSSL 1.1.x and above */
+/*  https://www.openssl.org/docs/man1.1.1/man3/SSLv23_client_method.html      */
 
-   This->ssl_context = SSL_CTX_new(SSLv23_client_method());
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   meth = TLS_client_method();
+#else
+   meth = SSLv23_client_method();
+#endif
+
+/*  create a new SSL context */
+
+   This->ssl_context = SSL_CTX_new(meth);
    if (This->ssl_context==NULL) {
         DUMP_ERR_STACK ();
         return -1;
    }
+
+/* retrieve current options */
+
+   flags = SSL_CTX_get_options();
+
+/* disable compression, which can leak information */
+
+#ifdef SSL_OP_NO_COMPRESSION
+   flags |= SSL_OP_NO_COMPRESSION;
+#endif
+
+/* disable SSLv2 and SSLv3 on pre-OpenSSL 1.1.x. This will ensure TLS 1.0 and above. */
+
+#ifdef SSL_OP_NO_SSLv2
+    flags |= SSL_OP_NO_SSLv2;
+#endif
+
+#ifdef SSL_OP_NO_SSLv3
+    flags |= SSL_OP_NO_SSLv3;
+#endif
+
+/* finally, set the context options */
+
+   SSL_CTX_set_options(This->ssl_context, flags);
 
 /* if a certificate authority file is defined, load it into this context */
 
@@ -541,7 +617,6 @@ int tn3270_ssl_stream_init (Tn5250Stream *This)
         SSL_CTX_set_default_passwd_cb(This->ssl_context,
                 (pem_password_cb *)ssl_stream_passwd_cb);
         SSL_CTX_set_default_passwd_cb_userdata(This->ssl_context, (void *)This);
-
    }
 
 /* If a certificate file has been defined, load it into this context as well */
