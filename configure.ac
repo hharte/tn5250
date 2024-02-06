@@ -152,16 +152,19 @@ dnl ** happily, we don't have to hunt for them thanks to ldconfig!
 dnl **
 if test -n $sslincludedir; then
      CPPFLAGS="$CPPFLAGS $sslincludedir"
-     AC_CHECK_LIB(crypto,CRYPTO_num_locks)
-     if test "$ac_cv_lib_crypto_CRYPTO_num_locks" != "yes"
-     then
-             AC_MSG_ERROR([** Unable to find OpenSSL libraries!])
-     fi
-     AC_CHECK_LIB(ssl,SSL_library_init)
-     if test "$ac_cv_lib_ssl_SSL_library_init" != "yes"
-     then
-             AC_MSG_ERROR([** Unable to find OpenSSL libraries!])
-     fi
+     # AC_CHECK_LIB(crypto,CRYPTO_num_locks)
+     AC_CHECK_HEADERS([openssl/crypto.h])
+     #if test "$ac_cv_lib_crypto_CRYPTO_num_locks" != "yes"
+     #then
+     #        AC_MSG_ERROR([** Unable to find OpenSSL libraries!])
+     #fi
+
+     #AC_CHECK_LIB(ssl,SSL_library_init)
+     AC_CHECK_HEADERS([openssl/ssl.h])
+     #if test "$ac_cv_lib_ssl_SSL_library_init" != "yes"
+     #then
+     #        AC_MSG_ERROR([** Unable to find OpenSSL libraries!])
+     #fi
 fi
 
 dnl **
