@@ -28,6 +28,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/opensslv.h>
 #include <time.h>
 
 static int ssl_stream_get_next(Tn5250Stream *This,unsigned char *buf,int size);
@@ -352,13 +353,19 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
    int len;
    char methstr[5];
    SSL_METHOD *meth=NULL;
+   long flags = 0;
 
    TN5250_LOG(("tn5250_ssl_stream_init() entered.\n"));
 
 /*  initialize SSL library */
+/*  https://wiki.openssl.org/index.php/Library_Initialization */
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   OPENSSL_init_ssl(0, NULL);
+#else
    SSL_load_error_strings();
    SSL_library_init();
+#endif
 
 /*  which SSL method do we use? */
 
@@ -381,10 +388,14 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
 //        meth = SSLv23_client_method();         
 //        TN5250_LOG(("SSL Method = SSLv23_client_method()\n"));
    }
-#ifndef SSL_OP_NO_TLSv1_3
-   meth = SSLv23_client_method();
-#else
+
+/* Prefer the flexible version *_method available in OpenSSL 1.1.x and above */
+/* https://www.openssl.org/docs/man1.1.1/man3/SSLv23_client_method.html      */
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
    meth = TLS_client_method();
+#else
+   meth = SSLv23_client_method();
 #endif
 
 /*  create a new SSL context */
@@ -394,6 +405,30 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
         DUMP_ERR_STACK ();
         return -1;
    }
+
+/* retrieve current options */
+
+   flags = SSL_CTX_get_options();
+
+/* disable compression, which can leak information */
+
+#ifdef SSL_OP_NO_COMPRESSION
+   flags |= SSL_OP_NO_COMPRESSION;
+#endif
+
+/* disable SSLv2 and SSLv3 on pre-OpenSSL 1.1.x. This will ensure TLS 1.0 and above. */
+
+#ifdef SSL_OP_NO_SSLv2
+    flags |= SSL_OP_NO_SSLv2;
+#endif
+
+#ifdef SSL_OP_NO_SSLv3
+    flags |= SSL_OP_NO_SSLv3;
+#endif
+
+/* finally, set the context options */
+
+   SSL_CTX_set_options(This->ssl_context, flags);
 
 /* if a certificate authority file is defined, load it into this context */
 
@@ -418,14 +453,13 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
         SSL_CTX_set_default_passwd_cb(This->ssl_context,
                 (pem_password_cb *)ssl_stream_passwd_cb);
         SSL_CTX_set_default_passwd_cb_userdata(This->ssl_context, (void *)This);
-
    }
 
 /* If a certificate file has been defined, load it into this context as well */
 
    if (This->config!=NULL && tn5250_config_get (This->config, "ssl_cert_file")){
 
-        if ( tn5250_config_get (This->config,  "ssl_check_exp") ) {
+        if (tn5250_config_get (This->config,  "ssl_check_exp") ) {
            X509 *client_cert;
            time_t tnow;
            int extra_time;
@@ -494,19 +528,61 @@ int tn5250_ssl_stream_init (Tn5250Stream *This)
 int tn3270_ssl_stream_init (Tn5250Stream *This)
 {
    int len;
+   SSL_METHOD *meth=NULL;
+   long flags = 0;
+
+   TN5250_LOG(("tn3270_ssl_stream_init() entered.\n"));
 
 /* initialize SSL library */
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   OPENSSL_init_ssl(0, NULL);
+#else
    SSL_load_error_strings();
    SSL_library_init();
+#endif
 
-/* create a new SSL context */
+/*  which SSL method do we use? */
+/*  prefer the flexible version *_method available in OpenSSL 1.1.x and above */
+/*  https://www.openssl.org/docs/man1.1.1/man3/SSLv23_client_method.html      */
 
-   This->ssl_context = SSL_CTX_new(SSLv23_client_method());
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+   meth = TLS_client_method();
+#else
+   meth = SSLv23_client_method();
+#endif
+
+/*  create a new SSL context */
+
+   This->ssl_context = SSL_CTX_new(meth);
    if (This->ssl_context==NULL) {
         DUMP_ERR_STACK ();
         return -1;
    }
+
+/* retrieve current options */
+
+   flags = SSL_CTX_get_options();
+
+/* disable compression, which can leak information */
+
+#ifdef SSL_OP_NO_COMPRESSION
+   flags |= SSL_OP_NO_COMPRESSION;
+#endif
+
+/* disable SSLv2 and SSLv3 on pre-OpenSSL 1.1.x. This will ensure TLS 1.0 and above. */
+
+#ifdef SSL_OP_NO_SSLv2
+    flags |= SSL_OP_NO_SSLv2;
+#endif
+
+#ifdef SSL_OP_NO_SSLv3
+    flags |= SSL_OP_NO_SSLv3;
+#endif
+
+/* finally, set the context options */
+
+   SSL_CTX_set_options(This->ssl_context, flags);
 
 /* if a certificate authority file is defined, load it into this context */
 
@@ -541,7 +617,6 @@ int tn3270_ssl_stream_init (Tn5250Stream *This)
         SSL_CTX_set_default_passwd_cb(This->ssl_context,
                 (pem_password_cb *)ssl_stream_passwd_cb);
         SSL_CTX_set_default_passwd_cb_userdata(This->ssl_context, (void *)This);
-
    }
 
 /* If a certificate file has been defined, load it into this context as well */
@@ -589,20 +664,31 @@ int tn3270_ssl_stream_init (Tn5250Stream *This)
 static int ssl_stream_connect(Tn5250Stream * This, const char *to)
 {
    struct sockaddr_in serv_addr;
-   u_long ioctlarg = 1;
-   char *address;
-   int r;
    X509 *server_cert;
+   u_long ioctlarg = 1;
    long certvfy;
+   size_t len;
+   int r;
 
-   TN5250_LOG(("tn5250_ssl_stream_connect() entered.\n"));
+   /* Max hostname is slightly less than 255. Allocate on stack */
+   /* to stay out of the memory allocator and for automatic     */
+   /* cleanup. */
+   char address[257]; address[0] = '\0';
+
+   TN5250_LOG(("ssl_stream_connect() entered.\n"));
 
    memset((char *) &serv_addr, 0, sizeof(serv_addr));
    serv_addr.sin_family = AF_INET;
 
-   /* Figure out the internet address. */
-   address = (char *)malloc (strlen (to)+1);
-   strcpy (address, to);
+   /* Figure out the internet address. Ensure NULL termination. */
+   len = strlen(to);
+   if (len >= sizeof(address) -1) {
+      TN5250_LOG(("sslstream: hostname is too long!\n"));
+      return -1;
+   }
+   strncpy (address, to, sizeof(address));
+   address[sizeof(address) -1] = '\0';
+
    if (strchr (address, ':'))
       *strchr (address, ':') = '\0';
    
@@ -612,9 +698,9 @@ static int ssl_stream_connect(Tn5250Stream * This, const char *to)
       if (pent != NULL)
 	 serv_addr.sin_addr.s_addr = *((u_long *) (pent->h_addr));
    }
-   free (address);
+
    if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-      TN5250_LOG(("sslstream: Host lookup failed!\n"));
+      TN5250_LOG(("sslstream: Hostname lookup failed!\n"));
       return -1;
    }
 
@@ -643,8 +729,26 @@ static int ssl_stream_connect(Tn5250Stream * This, const char *to)
    This->ssl_handle = SSL_new(This->ssl_context);
    if (This->ssl_handle==NULL) {
         DUMP_ERR_STACK ();
-        TN5250_LOG(("sslstream: SSL_new() failed!\n"));
+        TN5250_LOG(("sslstream: SSL_new() failed, errnum=0x%lx\n", ERR_get_error()));
         return -1;
+   }
+
+   /* Use a preferred list of ciphers, and remove unneeded ciphers */
+   /* in the client_hello, like PSK and SRP.                       */
+   const char PREFERRED_CIPHERS[] = "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4";
+   if (SSL_set_cipher_list(This->ssl_handle, PREFERRED_CIPHERS) != 1) {
+      TN5250_LOG(("sslstream: SSL_set_cipher_list() failed, errnum=0x%lx\n", ERR_get_error()));
+      /* Not fatal, but not good either. */
+      /* return -1; */
+   }
+
+   /* Must set Server Name Indication (SNI) here. It should be set   */
+   /* to the hostname, but it can use an IP address if it is used in */
+   /* the X.509 certificate.                                         */
+   if (SSL_set_tlsext_host_name(ssl, address) != 1) {
+      TN5250_LOG(("sslstream: SSL_set_tlsext_host_name() failed, errnum=0x%lx\n", ERR_get_error()));
+      /* Not fatal, but not good either. */
+      /* return -1; */
    }
 
    This->sockfd = socket(AF_INET, SOCK_STREAM, 0);
