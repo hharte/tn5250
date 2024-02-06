@@ -664,20 +664,31 @@ int tn3270_ssl_stream_init (Tn5250Stream *This)
 static int ssl_stream_connect(Tn5250Stream * This, const char *to)
 {
    struct sockaddr_in serv_addr;
-   u_long ioctlarg = 1;
-   char *address;
-   int r;
    X509 *server_cert;
+   u_long ioctlarg = 1;
    long certvfy;
+   size_t len;
+   int r;
 
-   TN5250_LOG(("tn5250_ssl_stream_connect() entered.\n"));
+   /* Max hostname is slightly less than 255. Allocate on stack */
+   /* to stay out of the memory allocator and for automatic     */
+   /* cleanup. */
+   char address[257]; address[0] = '\0';
+
+   TN5250_LOG(("ssl_stream_connect() entered.\n"));
 
    memset((char *) &serv_addr, 0, sizeof(serv_addr));
    serv_addr.sin_family = AF_INET;
 
-   /* Figure out the internet address. */
-   address = (char *)malloc (strlen (to)+1);
-   strcpy (address, to);
+   /* Figure out the internet address. Ensure NULL termination. */
+   len = strlen(to);
+   if (len >= sizeof(address) -1) {
+      TN5250_LOG(("sslstream: hostname is too long!\n"));
+      return -1;
+   }
+   strncpy (address, to, sizeof(address));
+   address[sizeof(address) -1] = '\0';
+
    if (strchr (address, ':'))
       *strchr (address, ':') = '\0';
    
@@ -687,9 +698,9 @@ static int ssl_stream_connect(Tn5250Stream * This, const char *to)
       if (pent != NULL)
 	 serv_addr.sin_addr.s_addr = *((u_long *) (pent->h_addr));
    }
-   free (address);
+
    if (serv_addr.sin_addr.s_addr == INADDR_NONE) {
-      TN5250_LOG(("sslstream: Host lookup failed!\n"));
+      TN5250_LOG(("sslstream: Hostname lookup failed!\n"));
       return -1;
    }
 
@@ -718,8 +729,26 @@ static int ssl_stream_connect(Tn5250Stream * This, const char *to)
    This->ssl_handle = SSL_new(This->ssl_context);
    if (This->ssl_handle==NULL) {
         DUMP_ERR_STACK ();
-        TN5250_LOG(("sslstream: SSL_new() failed!\n"));
+        TN5250_LOG(("sslstream: SSL_new() failed, errnum=0x%lx\n", ERR_get_error()));
         return -1;
+   }
+
+   /* Use a preferred list of ciphers, and remove unneeded ciphers */
+   /* in the client_hello, like PSK and SRP.                       */
+   const char PREFERRED_CIPHERS[] = "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4";
+   if (SSL_set_cipher_list(This->ssl_handle, PREFERRED_CIPHERS) != 1) {
+      TN5250_LOG(("sslstream: SSL_set_cipher_list() failed, errnum=0x%lx\n", ERR_get_error()));
+      /* Not fatal, but not good either. */
+      /* return -1; */
+   }
+
+   /* Must set Server Name Indication (SNI) here. It should be set   */
+   /* to the hostname, but it can use an IP address if it is used in */
+   /* the X.509 certificate.                                         */
+   if (SSL_set_tlsext_host_name(ssl, address) != 1) {
+      TN5250_LOG(("sslstream: SSL_set_tlsext_host_name() failed, errnum=0x%lx\n", ERR_get_error()));
+      /* Not fatal, but not good either. */
+      /* return -1; */
    }
 
    This->sockfd = socket(AF_INET, SOCK_STREAM, 0);
