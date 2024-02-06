@@ -26,6 +26,9 @@
 #define DEBUG
 */
 
+extern void scs_main (Tn5250SCS * This);
+extern void scs_ff (Tn5250SCS * This);
+extern void scs_nl (Tn5250SCS * This);
 
 static void scs2ascii_pp (Tn5250SCS * This);
 static void scs2ascii_ahpp (int *curpos);

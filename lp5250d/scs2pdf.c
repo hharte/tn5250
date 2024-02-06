@@ -63,6 +63,17 @@
 #define COURIER 1
 #define COURIER_BOLD 2
 
+extern void scs_main (Tn5250SCS * This);
+extern void scs_cr (Tn5250SCS * This);
+extern void scs_ff (Tn5250SCS * This);
+extern void scs_nl (Tn5250SCS * This);
+extern void scs_sld (Tn5250SCS * This);
+extern void scs_avpp (Tn5250SCS * This);
+extern void scs_rdpp (Tn5250SCS * This);
+extern void scs_rrpp (Tn5250SCS * This);
+extern void scs_ssld (Tn5250SCS * This);
+extern void scs_process2b (Tn5250SCS * This);
+
 void scs2pdf_nl (Tn5250SCS * This);
 void scs2pdf_pp (Tn5250SCS * This);
 void scs2pdf_ff (Tn5250SCS * This);

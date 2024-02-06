@@ -31,6 +31,7 @@ extern "C" {
 #include <ncurses.h>
 #else
 #include <curses.h>
+#include <term.h>
 #endif
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
