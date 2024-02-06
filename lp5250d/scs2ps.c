@@ -24,6 +24,12 @@
 
 #include "tn5250-private.h"
 
+extern void scs_main (Tn5250SCS * This);
+extern void scs_ff (Tn5250SCS * This);
+extern void scs_nl (Tn5250SCS * This);
+extern void scs_avpp (Tn5250SCS * This);
+extern void scs_process2b (Tn5250SCS * This);
+
 static void scs2ps_pp (Tn5250SCS * This);
 static void scs2ps_cr (Tn5250SCS * This);
 static void scs2ps_nl (Tn5250SCS * This);

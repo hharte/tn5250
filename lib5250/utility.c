@@ -22,6 +22,9 @@
 #include "tn5250-private.h"
 #include "transmaps.h"
 
+/* umask function */
+#include <sys/stat.h>
+
 static char mapfix[256];
 static char mapfix2[256];
 static char mapfix3[256];
